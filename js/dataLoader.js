@@ -1,5 +1,5 @@
 // Data loader module
-// Exports: loadCollisions(csvPath), loadLocations(csvPath)
+// Exports: loadCollisions(csvPath), loadLocations(csvPath), loadAnalysis(csvPath)
 
 export async function loadCollisions(csvPath) {
   const parseDate = d3.timeParse('%m/%d/%Y');
@@ -30,4 +30,32 @@ export async function loadLocations(csvPath) {
     return { lat, lon };
   });
   return raw.filter(Boolean);
+}
+
+// Analysis loader: parse fields for factor analysis
+export async function loadAnalysis(csvPath) {
+  const parseDate = d3.timeParse('%m/%d/%Y');
+  return (await d3.csv(csvPath, d => {
+    // injury indicator: use NUMBER OF PERSONS INJURED or Severity > 0
+    const numInj = parseFloat(d['NUMBER OF PERSONS INJURED']);
+    const sev = parseFloat(d['Severity']);
+    const injured = (isFinite(numInj) && numInj > 0) || (isFinite(sev) && sev > 0);
+
+    // hour
+    let hour = null;
+    if (d.CRASH_TIME) {
+      const m = /^(\d{1,2}):(\d{1,2})/.exec(d.CRASH_TIME.trim());
+      if (m) hour = +m[1];
+    }
+
+    // categorical fields
+    const borough = (d.BOROUGH || '').trim();
+    const factor1 = (d.CONTRIBUTING_FACTOR_1 || '').trim();
+    const factor2 = (d.CONTRIBUTING_FACTOR_2 || '').trim();
+    const vehicleType = (d['VEHICLE TYPE CODE 1'] || d.VEHICLE_TYPE || '').trim();
+    const preCrash = (d.PRE_CRASH || '').trim();
+    const driverSex = (d.DRIVER_SEX || '').trim();
+
+    return { injured, hour, borough, factor1, factor2, vehicleType, preCrash, driverSex };
+  })).filter(r => r); // keep all rows, even if some fields missing
 }

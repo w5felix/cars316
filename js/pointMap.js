@@ -12,13 +12,28 @@ export function renderPointMap(containerId, points) {
   const width = container.clientWidth;
   const height = container.clientHeight;
 
-  const margin = { top: 16, right: 16, bottom: 16, left: 16 };
+  const margin = { top: 16, right: 16, bottom: 48, left: 16 };
   const innerW = Math.max(100, width - margin.left - margin.right);
   const innerH = Math.max(100, height - margin.top - margin.bottom);
 
   const svg = d3.select(container).append('svg')
     .attr('width', width)
     .attr('height', height);
+
+  // Fun neon glow filter for hover effects
+  const defs = svg.append('defs');
+  const glow = defs.append('filter')
+    .attr('id', 'map-glow')
+    .attr('x', '-50%')
+    .attr('y', '-50%')
+    .attr('width', '200%')
+    .attr('height', '200%');
+  glow.append('feGaussianBlur').attr('in', 'SourceGraphic').attr('stdDeviation', 3).attr('result', 'blur');
+  glow.append('feMerge')
+    .selectAll('feMergeNode')
+    .data(['blur','SourceGraphic'])
+    .join('feMergeNode')
+    .attr('in', d => d);
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -159,74 +174,95 @@ export function renderPointMap(containerId, points) {
     })
     .attr('r', baseR)
     .attr('fill', '#ef4444')
-    .attr('fill-opacity', 0.6)
-    .attr('stroke', '#991b1b')
-    .attr('stroke-opacity', 0.6)
-    .attr('stroke-width', 0.5)
-    .attr('vector-effect', 'non-scaling-stroke');
-
-  // Density legend (fixed, not zoomed)
-  const legendW = 160, legendH = 10;
-  const densityLegend = g.append('g')
-    .attr('class', 'legend density-legend')
-    .attr('transform', `translate(${innerW - legendW - 8}, ${8})`);
-
-  const lg = densityLegend.append('defs').append('linearGradient')
-    .attr('id', 'density-lg')
-    .attr('x1', '0%').attr('x2', '100%')
-    .attr('y1', '0%').attr('y2', '0%');
-
-  const steps = 10;
-  const sortedVals = densityVals.slice().sort(d3.ascending);
-  const useQ = !allZeroDensity && !!d3.scaleSequentialQuantile;
-  if (useQ) {
-    d3.range(0, steps + 1).forEach(i => {
-      const t = i / steps;
-      const q = d3.quantileSorted(sortedVals, t);
-      lg.append('stop').attr('offset', `${t * 100}%`).attr('stop-color', densityColor(q));
+    .attr('fill-opacity', 0.7)
+    .attr('stroke', '#ffd8f0')
+    .attr('stroke-opacity', 0.9)
+    .attr('stroke-width', 0.6)
+    .attr('vector-effect', 'non-scaling-stroke')
+    .style('cursor', 'pointer')
+    .on('mousemove', function(event, d) {
+      d3.select(this)
+        .attr('filter', 'url(#map-glow)')
+        .attr('fill-opacity', 1);
+    })
+    .on('mouseout', function() {
+      d3.select(this)
+        .attr('filter', null)
+        .attr('fill-opacity', 0.7);
     });
-  } else {
-    const maxV = Math.max(1e-6, d3.max(densityVals) || 1e-6);
-    d3.range(0, steps + 1).forEach(i => {
-      const t = i / steps;
-      lg.append('stop').attr('offset', `${t * 100}%`).attr('stop-color', densityColor(t * maxV));
-    });
+
+  // Density legend rendered into external container below the map
+  const legendHost = document.getElementById((containerId.replace('#','')) + '-legend');
+  if (legendHost) {
+    legendHost.innerHTML = '';
+    const hostW = Math.max(180, Math.min(400, legendHost.clientWidth || width));
+    const hostH = 36;
+    const legendW = hostW - 20;
+    const legendH = 10;
+    const padX = 10;
+
+    const lsvg = d3.select(legendHost).append('svg')
+      .attr('width', hostW)
+      .attr('height', hostH);
+
+    const lg = lsvg.append('defs').append('linearGradient')
+      .attr('id', 'density-lg')
+      .attr('x1', '0%').attr('x2', '100%')
+      .attr('y1', '0%').attr('y2', '0%');
+
+    const steps = 10;
+    const sortedVals = densityVals.slice().sort(d3.ascending);
+    const useQ = !allZeroDensity && !!d3.scaleSequentialQuantile;
+    if (useQ) {
+      d3.range(0, steps + 1).forEach(i => {
+        const t = i / steps;
+        const q = d3.quantileSorted(sortedVals, t);
+        lg.append('stop').attr('offset', `${t * 100}%`).attr('stop-color', densityColor(q));
+      });
+    } else {
+      const maxV = Math.max(1e-6, d3.max(densityVals) || 1e-6);
+      d3.range(0, steps + 1).forEach(i => {
+        const t = i / steps;
+        lg.append('stop').attr('offset', `${t * 100}%`).attr('stop-color', densityColor(t * maxV));
+      });
+    }
+
+    lsvg.append('rect')
+      .attr('x', padX)
+      .attr('y', 4)
+      .attr('width', legendW)
+      .attr('height', legendH)
+      .attr('fill', 'url(#density-lg)')
+      .attr('stroke', '#334155');
+
+    const legendScale = useQ
+      ? d3.scaleLinear().domain([0, 1]).range([padX, padX + legendW])
+      : d3.scaleLinear().domain([0, Math.max(1e-6, d3.max(densityVals) || 1e-6)]).range([padX, padX + legendW]);
+
+    let legendAxis;
+    if (useQ) {
+      const ticksP = [0, 0.25, 0.5, 0.75, 1];
+      const fmt = d3.format('.2f');
+      legendAxis = d3.axisBottom(legendScale)
+        .tickValues(ticksP)
+        .tickSize(4)
+        .tickFormat(p => fmt(d3.quantileSorted(sortedVals, p) || 0));
+    } else {
+      legendAxis = d3.axisBottom(legendScale)
+        .ticks(4)
+        .tickSize(4)
+        .tickFormat(d3.format('.2f'));
+    }
+
+    lsvg.append('g')
+      .attr('transform', `translate(0, ${4 + legendH})`)
+      .call(legendAxis);
+    lsvg.append('text')
+      .attr('x', hostW / 2)
+      .attr('y', 32)
+      .attr('text-anchor', 'middle')
+      .text('Regional accident density');
   }
-
-  densityLegend.append('rect')
-    .attr('x', 0)
-    .attr('y', 0)
-    .attr('width', legendW)
-    .attr('height', legendH)
-    .attr('fill', 'url(#density-lg)')
-    .attr('stroke', '#334155');
-
-  const legendScale = useQ
-    ? d3.scaleLinear().domain([0, 1]).range([0, legendW])
-    : d3.scaleLinear().domain([0, Math.max(1e-6, d3.max(densityVals) || 1e-6)]).range([0, legendW]);
-
-  let legendAxis;
-  if (useQ) {
-    const ticksP = [0, 0.25, 0.5, 0.75, 1];
-    const fmt = d3.format('.2f');
-    legendAxis = d3.axisBottom(legendScale)
-      .tickValues(ticksP)
-      .tickSize(4)
-      .tickFormat(p => fmt(d3.quantileSorted(sortedVals, p) || 0));
-  } else {
-    legendAxis = d3.axisBottom(legendScale)
-      .ticks(4)
-      .tickSize(4)
-      .tickFormat(d3.format('.2f'));
-  }
-  densityLegend.append('g')
-    .attr('transform', `translate(0, ${legendH})`)
-    .call(legendAxis);
-  densityLegend.append('text')
-    .attr('x', legendW / 2)
-    .attr('y', legendH + 20)
-    .attr('text-anchor', 'middle')
-    .text('Regional accident density');
 
   // Optional outline box as the "blank map" frame (not zoomed)
   g.append('rect')
@@ -244,19 +280,19 @@ export function renderPointMap(containerId, points) {
     .attr('width', innerW)
     .attr('height', innerH)
     .attr('fill', 'transparent')
-    .style('cursor', 'grab');
+    .style('pointer-events', 'none');
 
   const zoom = d3.zoom()
     .scaleExtent([1, 40])
     .translateExtent([[0, 0], [innerW, innerH]])
     .extent([[0, 0], [innerW, innerH]])
-    .on('start', () => overlay.style('cursor', 'grabbing'))
-    .on('end', () => overlay.style('cursor', 'grab'))
+    .on('start', () => svg.style('cursor', 'grabbing'))
+    .on('end', () => svg.style('cursor', 'default'))
     .on('zoom', (event) => {
       mapG.attr('transform', event.transform);
       const k = event.transform.k;
       circles.attr('r', baseR / k);
     });
 
-  overlay.call(zoom);
+  svg.call(zoom);
 }

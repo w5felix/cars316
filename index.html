@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Crash Stories: Time, Place, and Possibility</title>
+  <title>Crash Data: Time, Location, and Factors</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <!-- Playful Google Fonts -->
@@ -15,59 +15,178 @@
 </head>
 <body>
   <!-- Hero -->
-  <header class="hero py-5 text-center">
+  <header class="hero py-5 text-center reveal" data-reveal-delay="0">
     <div class="container">
-      <h1 class="display-4 hero-title">Crash Stories</h1>
-      <p class="lead hero-tagline mb-3">Between midnight and rush hour, on streets that never sit still — every dot and every square is a pulse of the city.</p>
+      <h1 class="display-4 hero-title">Crash Data</h1>
+      <p class="lead hero-tagline mb-3">This page is a small map of choices. The data is a 5% sample of crash records. The visuals are simple. The goal is clarity. The intent is action.</p>
       <p class="subtitle">Data: data/sample/collisions_severity_sample_5.csv</p>
     </div>
   </header>
 
-  <!-- Story Section 1: Temporal Heatmap -->
-  <section class="py-4 section-card">
+  <!-- Chapter 1: Place → See where risk lives -->
+  <section class="py-5 section-card alt reveal" data-reveal-delay="60">
     <div class="container">
-      <div class="row align-items-start g-4">
+      <div class="row align-items-start g-4 flex-lg-row-reverse">
         <div class="col-lg-5">
-          <h2 class="section-title">When the city breathes</h2>
-          <p class="section-copy">Trace months across the x‑axis and hours down the y‑axis. Greens whisper of quieter moments; reds shout where time and traffic collide. Zoom to focus. Scroll to cycle hours. Find the rhythms that shape safety — and the surprises that break the pattern.</p>
+          <div class="chapter-label">Chapter 1 · Place</div>
+          <h2 class="section-title">See where risk lives</h2>
+          <p class="section-copy">Each dot is a crash. The frame holds the city without a basemap. Zoom and pan to read the pattern. The warm haze shows density. It points out clusters. It hints at corridors. Consider your usual routes. Consider small changes.</p>
         </div>
         <div class="col-lg-7">
           <div class="chart-card p-2 p-md-3">
-            <div class="chart-title">Temporal Heatmap (Month × Hour)</div>
-            <div id="chart" class="chart-wrap" aria-label="Temporal heatmap showing collisions per month and hour"></div>
+            <div class="chart-title">Accident Locations (Dots on Blank Map)</div>
+            <div id="map" class="chart-wrap" style="height:60vh;" aria-label="Geographic map of collision locations with density overlay"></div>
+            <div id="map-legend" class="legend-wrap mt-2" aria-label="Legend for density overlay"></div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Story Section 2: Geographic Map -->
-  <section class="py-4 section-card alt">
+  <!-- Chapter 2: Time → Find calmer hours -->
+  <section class="py-5 section-card reveal" data-reveal-delay="120">
     <div class="container">
-      <div class="row align-items-start g-4 flex-lg-row-reverse">
+      <div class="row align-items-start g-4">
         <div class="col-lg-5">
-          <h2 class="section-title">Where wheels meet world</h2>
-          <p class="section-copy">Each dot marks a moment. Clusters glow with a candy‑colored haze where streets hum the loudest. Pan and zoom to wander the grid. What neighborhoods ask for care? What routes reveal responsibility?</p>
+          <div class="chapter-label">Chapter 2 · Time</div>
+          <h2 class="section-title">Find calmer hours</h2>
+          <p class="section-copy">Months run left to right. Hours run top to bottom. Color runs from green to red. Zoom to focus on a span. Scroll to reorder hours. Look for quiet bands. Plan around them. A small change in schedule can lower risk.</p>
         </div>
         <div class="col-lg-7">
           <div class="chart-card p-2 p-md-3">
-            <div class="chart-title">Accident Locations (Dots on Blank Map)</div>
-            <div id="map" class="chart-wrap" style="height:60vh;" aria-label="Geographic map of collision locations with density overlay"></div>
+            <div class="chart-title">Temporal Heatmap (Month × Hour)</div>
+            <div id="chart" class="chart-wrap" aria-label="Temporal heatmap showing collisions per month and hour"></div>
+            <div id="chart-legend" class="legend-wrap mt-2" aria-label="Legend for temporal heatmap"></div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chapter 3: Why → Choose better defaults -->
+  <section class="py-5 section-card reveal" data-reveal-delay="180">
+    <div class="container">
+      <div class="row align-items-start g-4">
+        <div class="col-lg-5">
+          <div class="chapter-label">Chapter 3 · Why</div>
+          <h2 class="section-title">Choose better defaults</h2>
+          <p class="section-copy">This chart ranks conditions linked to injury. The score comes from a chi‑square test. The color shows risk ratio. Read the leaders. Pick one habit to shift. Small, repeatable choices add up.</p>
+        </div>
+        <div class="col-lg-7">
+          <div class="chart-card p-2 p-md-3">
+            <div class="chart-title">Most explanatory factors (injury likelihood)</div>
+            <div id="factors" class="chart-wrap" style="height:60vh;" aria-label="Bar chart of most significant factors by chi-square score"></div>
+            <div id="factors-legend" class="legend-wrap mt-2" aria-label="Legend for factors chart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to action -->
+  <section class="py-5 section-card cta reveal" data-reveal-delay="240">
+    <div class="container text-center">
+      <h2 class="section-title mb-2">Make one change this week</h2>
+      <p class="section-copy mb-4">Pick a safer hour. Pick a calmer route. Share one insight.</p>
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a class="btn btn-lg btn-cta" href="#chart">Shift my commute time</a>
+        <a class="btn btn-lg btn-cta alt" href="#map">Reroute around hotspots</a>
+        <a class="btn btn-lg btn-cta" href="#factors">Review top risk factors</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Draft Section: Placeholder Visualizations -->
+  <section class="py-5 section-card reveal" data-reveal-delay="300">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-12">
+          <h2 class="section-title">Draft visualizations <span class="draft-badge">DRAFT</span></h2>
+          <p class="draft-note">These are sketches for future interactive ideas. They are placeholders. They preview novel directions.</p>
+        </div>
+
+        <!-- Draft 1 -->
+        <div class="col-lg-4">
+          <div class="chart-card placeholder-card p-2 p-md-3 h-100">
+            <div class="chart-title">Sequence Sankey for event chains <span class="draft-badge">Draft</span></div>
+            <div class="chart-placeholder disabled" aria-label="Placeholder for Sequence Sankey visualization">Draft placeholder. Not implemented.</div>
+            <p class="section-copy mt-2 draft-note">A Sankey would show common event paths across time band, weather, action, and outcome. Filters would simplify flows. The aim is a readable chain of steps.</p>
+          </div>
+        </div>
+
+        <!-- Draft 2 -->
+        <div class="col-lg-4">
+          <div class="chart-card placeholder-card p-2 p-md-3 h-100">
+            <div class="chart-title">Calendar small multiples <span class="draft-badge">Draft</span></div>
+            <div class="chart-placeholder disabled" aria-label="Placeholder for Calendar small multiples visualization">Draft placeholder. Not implemented.</div>
+            <p class="section-copy mt-2 draft-note">Monthly calendars would show daily counts with compact marks. A brush would select spans. Scaling would be robust per month.</p>
+          </div>
+        </div>
+
+        <!-- Draft 3 -->
+        <div class="col-lg-4">
+          <div class="chart-card placeholder-card p-2 p-md-3 h-100">
+            <div class="chart-title">Risk terrain and corridors <span class="draft-badge">Draft</span></div>
+            <div class="chart-placeholder disabled" aria-label="Placeholder for Risk terrain and corridors visualization">Draft placeholder. Not implemented.</div>
+            <p class="section-copy mt-2 draft-note">Directional kernels would reveal risk ridges and likely corridors. A slider would tune direction. Pins would report ratios.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Methods Section -->
+  <section class="py-5 section-card alt reveal" data-reveal-delay="360">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-12">
+          <h2 class="section-title">Methods</h2>
+          <p class="section-copy">
+            We use a random 5% sample. We parse dates, times, and coordinates. We drop invalid or missing values.
+          </p>
+          <p class="section-copy">
+            The heatmap aggregates monthly counts by hour. The color scale uses percentiles within the visible window. Horizontal zoom adjusts the time window. Vertical scroll cycles the hour order.
+          </p>
+          <p class="section-copy">
+            The map fits inlier points with a Mercator projection. Identical coordinates separate with deterministic jitter. Far outliers are trimmed by quantiles. The density overlay uses percentile normalization. Point size stays constant while you zoom.
+          </p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Closing note -->
-  <section class="py-5 text-center closing">
+  <section class="py-5 text-center closing reveal" data-reveal-delay="420">
     <div class="container">
-      <p class="closing-line mb-1">Data is a compass. Design is a conversation. Safety is a choice we make together.</p>
-      <p class="closing-sub">Zoom into the details. Zoom out to the community. Then imagine what could be different tomorrow.</p>
+      <p class="closing-line mb-1">Information matters when it becomes a habit.</p>
+      <p class="closing-sub">Pick one change. Try it this week. Share the result.</p>
     </div>
   </section>
 
   <div id="tooltip" class="tooltip"></div>
+
+  <!-- Scroll reveal for sections (lightweight, accessible) -->
+  <script>
+    (function() {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const els = document.querySelectorAll('.reveal');
+      if (prefersReduced) {
+        els.forEach(el => el.classList.add('in-view'));
+        return;
+      }
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const delay = parseInt(entry.target.getAttribute('data-reveal-delay') || '0', 10);
+            setTimeout(() => entry.target.classList.add('in-view'), delay);
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      els.forEach(el => io.observe(el));
+    })();
+  </script>
+
   <script type="module" src="js/main.js"></script>
   <!-- Bootstrap JS (optional, no jQuery needed) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

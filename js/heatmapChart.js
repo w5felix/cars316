@@ -31,6 +31,21 @@ export function renderHeatmap(containerId, model) {
     .attr('width', width)
     .attr('height', height);
 
+  // Neon glow filter for goofy hover effects on cells
+  const defs = svg.append('defs');
+  const heatGlow = defs.append('filter')
+    .attr('id', 'heat-glow')
+    .attr('x', '-50%')
+    .attr('y', '-50%')
+    .attr('width', '200%')
+    .attr('height', '200%');
+  heatGlow.append('feGaussianBlur').attr('in', 'SourceGraphic').attr('stdDeviation', 2.5).attr('result', 'blur');
+  heatGlow.append('feMerge')
+    .selectAll('feMergeNode')
+    .data(['blur','SourceGraphic'])
+    .join('feMergeNode')
+    .attr('in', d => d);
+
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
   // X: time scale for zooming/panning
@@ -120,6 +135,7 @@ export function renderHeatmap(containerId, model) {
   const svgNode = svg.node();
 
   cell
+    .style('cursor', 'pointer')
     .on('mousemove', function(event, d) {
       tooltip
         .style('left', (event.pageX) + 'px')
@@ -130,11 +146,16 @@ export function renderHeatmap(containerId, model) {
           Hour: ${String(d.hour).padStart(2, '0')}:00<br>
           Accidents: ${d.count}
         `);
-      d3.select(this).attr('stroke', '#0ea5e9').attr('stroke-width', 1);
+      d3.select(this)
+        .attr('stroke', '#19e3ff')
+        .attr('stroke-width', 1.5)
+        .attr('filter', 'url(#heat-glow)');
     })
     .on('mouseout', function() {
       tooltip.style('opacity', 0);
-      d3.select(this).attr('stroke', 'none');
+      d3.select(this)
+        .attr('stroke', 'none')
+        .attr('filter', null);
     });
 
   // Axes
@@ -175,15 +196,23 @@ export function renderHeatmap(containerId, model) {
     .text('Hour of day');
 
   // Legend (dynamic: updates when color scale changes)
-  const legend = svg.append('g')
-    .attr('class', 'legend')
-    .attr('transform', `translate(${margin.left + innerW - legendWidth}, ${margin.top + innerH + 10})`);
+  // External legend container just below the chart container
+  const baseId = containerId.replace('#','');
+  const legendHost = document.getElementById(baseId + '-legend');
+  if (legendHost) legendHost.innerHTML = '';
 
   function renderLegendFor(countsArr, clr) {
-    legend.selectAll('*').remove();
+    if (!legendHost) return;
+    legendHost.innerHTML = '';
+    const hostW = Math.max(180, Math.min(400, legendHost.clientWidth || width));
+    const hostH = 36;
 
-    const lg = legend.append('defs').append('linearGradient')
-      .attr('id', 'lg')
+    const lsvg = d3.select(legendHost).append('svg')
+      .attr('width', hostW)
+      .attr('height', hostH);
+
+    const lgdefs = lsvg.append('defs').append('linearGradient')
+      .attr('id', 'heat-lg')
       .attr('x1', '0%').attr('x2', '100%')
       .attr('y1', '0%').attr('y2', '0%');
 
@@ -194,33 +223,33 @@ export function renderHeatmap(containerId, model) {
     const sortedLocal = arr.slice().sort(d3.ascending);
     if (useQuantileLocal) {
       d3.range(0, steps + 1).forEach(i => {
-        const t = i / steps; // percentile
+        const t = i / steps;
         const q = d3.quantileSorted(sortedLocal, t);
-        lg.append('stop')
-          .attr('offset', `${t * 100}%`)
-          .attr('stop-color', clr(q));
+        lgdefs.append('stop').attr('offset', `${t * 100}%`).attr('stop-color', clr(q));
       });
     } else {
       const maxLocal = Math.max(1, d3.max(arr) || globalMax || 1);
       d3.range(0, steps + 1).forEach(i => {
         const t = i / steps;
-        lg.append('stop')
-          .attr('offset', `${t * 100}%`)
-          .attr('stop-color', clr(t * maxLocal));
+        lgdefs.append('stop').attr('offset', `${t * 100}%`).attr('stop-color', clr(t * maxLocal));
       });
     }
 
-    legend.append('rect')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('width', legendWidth)
-      .attr('height', legendHeight)
-      .attr('fill', 'url(#lg)')
+    const padX = 10;
+    const legendW2 = hostW - padX * 2;
+    const legendH2 = 10;
+
+    lsvg.append('rect')
+      .attr('x', padX)
+      .attr('y', 4)
+      .attr('width', legendW2)
+      .attr('height', legendH2)
+      .attr('fill', 'url(#heat-lg)')
       .attr('stroke', '#334155');
 
     const legendScale = useQuantileLocal
-      ? d3.scaleLinear().domain([0, 1]).range([0, legendWidth])
-      : d3.scaleLinear().domain([0, Math.max(1, d3.max(arr) || globalMax || 1)]).range([0, legendWidth]);
+      ? d3.scaleLinear().domain([0, 1]).range([padX, padX + legendW2])
+      : d3.scaleLinear().domain([0, Math.max(1, d3.max(arr) || globalMax || 1)]).range([padX, padX + legendW2]);
 
     let legendAxis;
     if (useQuantileLocal) {
@@ -237,15 +266,15 @@ export function renderHeatmap(containerId, model) {
         .tickFormat(d3.format('~s'));
     }
 
-    legend.append('g')
-      .attr('transform', `translate(0, ${legendHeight})`)
+    lsvg.append('g')
+      .attr('transform', `translate(0, ${4 + legendH2})`)
       .call(legendAxis);
 
-    legend.append('text')
-      .attr('x', legendWidth / 2)
-      .attr('y', legendHeight + 28)
+    lsvg.append('text')
+      .attr('x', hostW / 2)
+      .attr('y', 32)
       .attr('text-anchor', 'middle')
-      .text(useQuantileLocal ? 'Accident frequency (percentile-normalized, visible window)' : 'Accident frequency (visible window)');
+      .text(useQuantileLocal ? 'Accident frequency (percentiles)' : 'Accident frequency');
   }
 
   renderLegendFor(allCounts, color);
