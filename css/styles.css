@@ -1,0 +1,145 @@
+:root {
+  /* Flamboyant, playful palette */
+  --bg: #1a1033;            /* deep purple base */
+  --bg2: #0d1b3d;           /* deep blue base */
+  --fg: #fff9f2;            /* warm white */
+  --muted: #ffd8f0;         /* soft pink for secondary text */
+  --grid: rgba(255,255,255,0.18);
+  --accent: #ff3eb5;        /* neon pink */
+  --accent-2: #19e3ff;      /* neon cyan */
+  --accent-3: #ffdd1a;      /* neon yellow */
+  --card: rgba(255,255,255,0.08);
+  --card-alt: rgba(0,0,0,0.15);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: radial-gradient(1200px 800px at 10% 10%, rgba(255, 62, 181, 0.18), transparent 60%),
+              radial-gradient(900px 700px at 90% 20%, rgba(25, 227, 255, 0.18), transparent 60%),
+              linear-gradient(135deg, var(--bg), var(--bg2));
+  color: var(--fg);
+  font-family: 'Comic Neue', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Hero section */
+.hero {
+  background: linear-gradient(160deg, rgba(255, 62, 181, 0.25), rgba(25, 227, 255, 0.25));
+  border-bottom: 3px dashed var(--accent-3);
+}
+.hero-title {
+  font-family: 'Bangers', cursive;
+  letter-spacing: 1px;
+  color: var(--accent-3);
+  text-shadow: 2px 2px 0 #ff3eb5, -2px -2px 0 #19e3ff;
+}
+.hero-tagline {
+  color: #eafffb;
+}
+
+p.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Section cards and titles */
+.section-card {
+  position: relative;
+}
+.section-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(600px 200px at 20% 0%, rgba(255, 221, 26, 0.12), transparent 60%);
+  pointer-events: none;
+}
+.section-card.alt::before {
+  background: radial-gradient(600px 200px at 80% 0%, rgba(25, 227, 255, 0.12), transparent 60%);
+}
+.section-title {
+  font-family: 'Bangers', cursive;
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  color: var(--accent-2);
+  text-shadow: 1px 1px 0 #ff3eb5;
+}
+.section-copy {
+  font-size: 1.05rem;
+  color: var(--fg);
+}
+
+/* Chart cards */
+.chart-card {
+  background: var(--card);
+  border-radius: 16px;
+  border: 3px solid var(--grid);
+  box-shadow: 0 0 0 3px rgba(255, 62, 181, 0.15), 0 12px 30px rgba(0,0,0,0.35);
+}
+.chart-title {
+  font-family: 'Bangers', cursive;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  margin: 4px 6px 6px 6px;
+}
+
+/* Chart container used by D3 renderers */
+.chart-wrap {
+  width: 100%;
+  height: calc(60vh);
+  min-height: 420px;
+  border-top: 2px dotted var(--grid);
+  padding-top: 8px;
+}
+
+/* Tooltip and axes keep high contrast for readability */
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(14, 23, 42, 0.92);
+  color: var(--fg);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.3;
+  opacity: 0;
+  transform: translate(-50%, -120%);
+  transition: opacity 120ms ease-out;
+  white-space: nowrap;
+}
+.legend text, .axis text {
+  fill: #e5edff;
+  font-size: 11px;
+}
+.axis path, .axis line {
+  stroke: rgba(229, 237, 255, 0.4);
+  shape-rendering: crispEdges;
+}
+.gridline {
+  stroke: rgba(229, 237, 255, 0.25);
+  opacity: 0.7;
+  shape-rendering: crispEdges;
+}
+
+/* Links */
+a.source {
+  color: var(--accent);
+  text-decoration: underline wavy var(--accent-3);
+  text-underline-offset: 3px;
+}
+
+/* Closing */
+.closing {
+  border-top: 3px dashed var(--accent-2);
+}
+.closing-line {
+  font-family: 'Bangers', cursive;
+  color: var(--accent);
+  font-size: 1.6rem;
+}
+.closing-sub {
+  color: var(--muted);
+}
