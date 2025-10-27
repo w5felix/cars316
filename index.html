@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crash Stories: Time, Place, and Possibility</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Playful Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+  <!-- App styles -->
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- D3 -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+  <!-- Hero -->
+  <header class="hero py-5 text-center">
+    <div class="container">
+      <h1 class="display-4 hero-title">Crash Stories</h1>
+      <p class="lead hero-tagline mb-3">Between midnight and rush hour, on streets that never sit still — every dot and every square is a pulse of the city.</p>
+      <p class="subtitle">Data: data/sample/collisions_severity_sample_5.csv</p>
+    </div>
+  </header>
+
+  <!-- Story Section 1: Temporal Heatmap -->
+  <section class="py-4 section-card">
+    <div class="container">
+      <div class="row align-items-start g-4">
+        <div class="col-lg-5">
+          <h2 class="section-title">When the city breathes</h2>
+          <p class="section-copy">Trace months across the x‑axis and hours down the y‑axis. Greens whisper of quieter moments; reds shout where time and traffic collide. Zoom to focus. Scroll to cycle hours. Find the rhythms that shape safety — and the surprises that break the pattern.</p>
+        </div>
+        <div class="col-lg-7">
+          <div class="chart-card p-2 p-md-3">
+            <div class="chart-title">Temporal Heatmap (Month × Hour)</div>
+            <div id="chart" class="chart-wrap" aria-label="Temporal heatmap showing collisions per month and hour"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Story Section 2: Geographic Map -->
+  <section class="py-4 section-card alt">
+    <div class="container">
+      <div class="row align-items-start g-4 flex-lg-row-reverse">
+        <div class="col-lg-5">
+          <h2 class="section-title">Where wheels meet world</h2>
+          <p class="section-copy">Each dot marks a moment. Clusters glow with a candy‑colored haze where streets hum the loudest. Pan and zoom to wander the grid. What neighborhoods ask for care? What routes reveal responsibility?</p>
+        </div>
+        <div class="col-lg-7">
+          <div class="chart-card p-2 p-md-3">
+            <div class="chart-title">Accident Locations (Dots on Blank Map)</div>
+            <div id="map" class="chart-wrap" style="height:60vh;" aria-label="Geographic map of collision locations with density overlay"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing note -->
+  <section class="py-5 text-center closing">
+    <div class="container">
+      <p class="closing-line mb-1">Data is a compass. Design is a conversation. Safety is a choice we make together.</p>
+      <p class="closing-sub">Zoom into the details. Zoom out to the community. Then imagine what could be different tomorrow.</p>
+    </div>
+  </section>
+
+  <div id="tooltip" class="tooltip"></div>
+  <script type="module" src="js/main.js"></script>
+  <!-- Bootstrap JS (optional, no jQuery needed) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
