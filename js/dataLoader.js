@@ -27,7 +27,15 @@ export async function loadLocations(csvPath) {
     const lat = +m[1];
     const lon = +m[2];
     if (!isFinite(lat) || !isFinite(lon)) return null;
-    return { lat, lon };
+
+    // parse hour from CRASH_TIME (HH:MM)
+    let hour = null;
+    if (d.CRASH_TIME) {
+      const tm = /^(\d{1,2}):(\d{1,2})/.exec(d.CRASH_TIME.trim());
+      if (tm) hour = +tm[1];
+    }
+
+    return { lat, lon, hour };
   });
   return raw.filter(Boolean);
 }
@@ -41,12 +49,14 @@ export async function loadAnalysis(csvPath) {
     const sev = parseFloat(d['Severity']);
     const injured = (isFinite(numInj) && numInj > 0) || (isFinite(sev) && sev > 0);
 
-    // hour
+    // date and hour
+    const date = parseDate(d.CRASH_DATE);
     let hour = null;
     if (d.CRASH_TIME) {
       const m = /^(\d{1,2}):(\d{1,2})/.exec(d.CRASH_TIME.trim());
       if (m) hour = +m[1];
     }
+    const dow = date ? date.getDay() : null; // 0=Sun..6=Sat
 
     // categorical fields
     const borough = (d.BOROUGH || '').trim();
@@ -56,6 +66,6 @@ export async function loadAnalysis(csvPath) {
     const preCrash = (d.PRE_CRASH || '').trim();
     const driverSex = (d.DRIVER_SEX || '').trim();
 
-    return { injured, hour, borough, factor1, factor2, vehicleType, preCrash, driverSex };
+    return { injured, date, dow, hour, borough, factor1, factor2, vehicleType, preCrash, driverSex };
   })).filter(r => r); // keep all rows, even if some fields missing
 }

@@ -12,17 +12,68 @@
   <link rel="stylesheet" href="css/styles.css" />
   <!-- D3 -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
   <!-- Hero -->
   <header class="hero py-5 text-center reveal" data-reveal-delay="0">
     <div class="container">
       <h1 class="display-4 hero-title">Crash Data</h1>
-      <p class="lead hero-tagline mb-3">This page is a small map of choices. The data is a 5% sample of crash records. The visuals are simple. The goal is clarity. The intent is action.</p>
-      <p class="subtitle">Data: data/sample/collisions_severity_sample_5.csv</p>
+      <p class="lead hero-tagline mb-3">This page is a small map of choices. The data uses the full NYC crash records provided in this repository. The visuals are simple. The goal is clarity. The intent is action.</p>
+      <p class="subtitle">Data: data/original/collisions_severity.csv</p>
       <p class="subtitle">Authors: Felix Wu; Benjamin He; Andrew Hu</p>
     </div>
   </header>
+
+  <!-- Quick Risk Snapshot 1: Day of week -->
+  <section class="py-5 section-card reveal" data-reveal-delay="30">
+    <div class="container">
+      <h2 class="section-title mb-2">Risk by day of week</h2>
+      <p class="section-copy small mb-3">
+        What this shows: the empirically shrunk injury rate for crashes on each day of the week, with a dashed line for the overall dataset baseline.
+        Method: we compute the share of crashes with any injury for each day and apply a binomial empirical‑Bayes prior (k = 50) so small-sample days don’t jump around.
+        Read it as relative risk: bars above the dashed line indicate riskier-than-average days.
+      </p>
+      <div class="chart-card p-2 p-md-3">
+        <div class="chart-title">Most dangerous day of week</div>
+        <div id="viz-dow" class="chart-wrap" style="height:52vh; min-height:420px;" aria-label="Bar chart of empirically shrunk injury rate by day of week"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Risk Snapshot 2: Vehicle type -->
+  <section class="py-5 section-card alt reveal" data-reveal-delay="45">
+    <div class="container">
+      <h2 class="section-title mb-2">Risk by vehicle type</h2>
+      <p class="section-copy small mb-3">
+        What this shows: the injury rate for the most common vehicle types, stabilized with empirical‑Bayes shrinkage and compared to the dataset baseline (dashed line).
+        Method: we rank vehicle types by frequency, keep the top groups, and compute the EB‑shrunk injury proportion per type. This avoids over‑interpreting rare categories.
+        Interpretation: bars to the right of baseline are relatively more dangerous; to the left are safer, all else equal.
+      </p>
+      <div class="chart-card p-2 p-md-3">
+        <div class="chart-title">Most dangerous vehicle type</div>
+        <div id="viz-vehicle" class="chart-wrap" style="height:52vh; min-height:420px;" aria-label="Bar chart of empirically shrunk injury rate by vehicle type"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Risk Snapshot 3: Driver sex -->
+  <section class="py-5 section-card reveal" data-reveal-delay="60">
+    <div class="container">
+      <h2 class="section-title mb-2">Male vs female drivers</h2>
+      <p class="section-copy small mb-3">
+        What this shows: empirically shrunk injury rates by recorded driver sex compared to the dataset baseline. Categories include Male, Female, and Other/Unknown when present.
+        Method: binomial empirical‑Bayes shrinkage (k = 50) applied to each group; the dashed line marks the overall mean.
+        Reading the chart: higher bars indicate higher likelihood of injury involvement among crashes attributed to that driver group.
+      </p>
+      <div class="chart-card p-2 p-md-3">
+        <div class="chart-title">Male vs female drivers</div>
+        <div id="viz-gender" class="chart-wrap" style="height:52vh; min-height:420px;" aria-label="Bar chart comparing injury rate for male vs female drivers with EB shrinkage"></div>
+      </div>
+    </div>
+  </section>
 
   <!-- Chapter 1: Place → See where risk lives -->
   <section class="py-5 section-card alt reveal" data-reveal-delay="60">
@@ -31,13 +82,19 @@
         <div class="col-lg-5">
           <div class="chapter-label">Chapter 1 · Place</div>
           <h2 class="section-title">See where risk lives</h2>
-          <p class="section-copy">Each dot is a crash. The frame holds the city without a basemap. Zoom and pan to read the pattern. The warm haze shows density. It points out clusters. It hints at corridors. Consider your usual routes. Consider small changes.</p>
+          <p class="section-copy">Methods and findings: We parse LOCATION strings into latitude/longitude and CRASH_TIME into an integer hour (0–23), discarding rows with invalid or missing values. Points are rendered on a Leaflet map (Web Mercator) over OpenStreetMap tiles using canvas-based circle markers with fixed 1 px radius and red fill; symbol size is constant in screen pixels across zoom levels. The Hour slider filters points by exact hour equality on the client. This view exposes spatial concentration: collisions cluster along dense arterials and Manhattan’s core, with visible corridors along major avenues and expressway interchanges. When selecting peak commuting hours, the spatial footprint broadens and intensifies on trunk routes; overnight selections reveal sparse, localized activity.</p>
         </div>
         <div class="col-lg-7">
           <div class="chart-card p-2 p-md-3">
-            <div class="chart-title">Accident Locations (Dots on Blank Map)</div>
-            <div id="map" class="chart-wrap" style="height:60vh;" aria-label="Geographic map of collision locations with density overlay"></div>
-            <div id="map-legend" class="legend-wrap mt-2" aria-label="Legend for density overlay"></div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <div class="chart-title m-0">Accident Locations on Streets (Dots)</div>
+              <div class="d-flex align-items-center gap-2" aria-label="Filter crashes by hour">
+                <label for="hour-slider" class="form-label mb-0">Hour:</label>
+                <input id="hour-slider" type="range" min="0" max="23" step="1" value="0" class="form-range" style="width:180px" aria-valuemin="0" aria-valuemax="23" aria-valuenow="0" aria-label="Hour of day slider">
+                <output id="hour-label" for="hour-slider" class="badge bg-secondary" aria-live="polite">00:00</output>
+              </div>
+            </div>
+            <div id="leaflet-map" class="chart-wrap" style="height:60vh;" aria-label="Leaflet basemap of New York City with crash dots filtered by selected hour"></div>
           </div>
         </div>
       </div>
@@ -51,13 +108,14 @@
         <div class="col-lg-5">
           <div class="chapter-label">Chapter 2 · Time</div>
           <h2 class="section-title">Find calmer hours</h2>
-          <p class="section-copy">Months run left to right. Hours run top to bottom. Color runs from green to red. Zoom to focus on a span. Scroll to reorder hours. Look for quiet bands. Plan around them. A small change in schedule can lower risk.</p>
+          <p class="section-copy">Methods and findings: We bin collisions by calendar month (columns) and hour of day (rows) to form a Month×Hour matrix. Counts are simple frequencies per cell computed from parsed CRASH_DATE and CRASH_TIME fields after dropping invalid records. The color scale is percentile-normalized over the visible window to reduce the effect of extreme cells; this emphasizes relative intensity patterns rather than absolute magnitudes. Panning/zooming the time axis recomputes the domain; row order can be cycled for comparison. The matrix shows clear diurnal structure: minima between ~02:00–05:00; pronounced AM (~07:00–10:00) and PM (~16:00–19:00) peaks on weekdays; flatter profiles on weekends; and a visible level shift downward from 2020 onward consistent with pandemic-era traffic reductions.</p>
         </div>
         <div class="col-lg-7">
           <div class="chart-card p-2 p-md-3">
             <div class="chart-title">Temporal Heatmap (Month × Hour)</div>
             <div id="chart" class="chart-wrap" aria-label="Temporal heatmap showing collisions per month and hour"></div>
             <div id="chart-legend" class="legend-wrap mt-2" aria-label="Legend for temporal heatmap"></div>
+            <div id="time-insight" class="mt-2 small text-muted" aria-live="polite"></div>
           </div>
         </div>
       </div>
@@ -74,10 +132,67 @@
           <p class="section-copy">This chart ranks conditions linked to injury. The score comes from a chi‑square test. The color shows risk ratio. Read the leaders. Pick one habit to shift. Small, repeatable choices add up.</p>
         </div>
         <div class="col-lg-7">
-          <div class="chart-card p-2 p-md-3">
+          <div class="chart-card p-2 p-md-3 mb-3">
             <div class="chart-title">Most explanatory factors (injury likelihood)</div>
             <div id="factors" class="chart-wrap" style="height:60vh;" aria-label="Bar chart of most significant factors by chi-square score"></div>
             <div id="factors-legend" class="legend-wrap mt-2" aria-label="Legend for factors chart"></div>
+          </div>
+          <div class="chart-card p-2 p-md-3">
+            <div class="chart-title">Personalized risk estimator</div>
+            <form id="smart-form" class="row g-3 align-items-end" aria-label="Select conditions to estimate injury likelihood">
+              <div class="col-sm-6 col-md-4">
+                <label for="sf-action" class="form-label">What was your car doing?</label>
+                <select id="sf-action" class="form-select" aria-label="Pre-crash action select">
+                  <option value="">Any</option>
+                </select>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <label for="sf-vehicle" class="form-label">Vehicle type</label>
+                <select id="sf-vehicle" class="form-select" aria-label="Vehicle type select">
+                  <option value="">Any</option>
+                </select>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <label for="sf-gender" class="form-label">Driver gender</label>
+                <select id="sf-gender" class="form-select" aria-label="Driver gender select">
+                  <option value="">Any</option>
+                </select>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <label for="sf-borough" class="form-label">Borough</label>
+                <select id="sf-borough" class="form-select" aria-label="Borough select">
+                  <option value="">Any</option>
+                </select>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <label for="sf-hour" class="form-label">Hour</label>
+                <select id="sf-hour" class="form-select" aria-label="Hour of day select">
+                  <option value="">Any</option>
+                </select>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <label for="sf-factor1" class="form-label">Contributing factor</label>
+                <select id="sf-factor1" class="form-select" aria-label="Contributing factor select">
+                  <option value="">Any</option>
+                </select>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <label for="sf-weather" class="form-label">Weather</label>
+                <select id="sf-weather" class="form-select" aria-label="Weather select" disabled>
+                  <option value="">Not available in dataset</option>
+                </select>
+                <div class="form-text">Weather isn’t present in this dataset CSV; control shown for future data.</div>
+              </div>
+              <div class="col-12">
+                <output id="smart-results" class="alert alert-info mb-0" role="status" aria-live="polite">Pick options to see estimated injury likelihood.</output>
+              </div>
+              <div class="col-12">
+                <div id="smart-chart" class="mt-3" style="height:140px;" aria-label="Bar chart comparing your estimated injury risk to baseline"></div>
+              </div>
+            </form>
+            <p id="smart-methods" class="section-copy small mt-2">
+              Statistical notes: We estimate injury likelihood using two layers. (1) Exact-match estimate: a binomial proportion for the records matching your selections, stabilized with empirical‑Bayes shrinkage toward the overall dataset mean (prior weight k = 50). (2) Backoff estimate: when there are few or no identical cases, we combine marginal evidence from each selected factor (borough, hour, action, vehicle, driver sex, contributing factor) using a Naive‑Bayes‑style odds product relative to the global baseline, with per‑factor odds ratios themselves empirically shrunk. We cap extreme per‑factor effects and blend the exact and backoff estimates based on the matched sample size. Reported relative risk is vs the overall baseline. Categories marked “Any” are not filtered.
+            </p>
           </div>
         </div>
       </div>
@@ -91,50 +206,12 @@
       <p class="section-copy mb-4">Pick a safer hour. Pick a calmer route. Share one insight.</p>
       <div class="d-flex justify-content-center gap-3 flex-wrap">
         <a class="btn btn-lg btn-cta" href="#chart">Shift my commute time</a>
-        <a class="btn btn-lg btn-cta alt" href="#map">Reroute around hotspots</a>
+        <a class="btn btn-lg btn-cta alt" href="#leaflet-map">Reroute around hotspots</a>
         <a class="btn btn-lg btn-cta" href="#factors">Review top risk factors</a>
       </div>
     </div>
   </section>
 
-  <!-- Draft Section: Placeholder Visualizations -->
-  <section class="py-5 section-card reveal" data-reveal-delay="300">
-    <div class="container">
-      <div class="row g-4">
-        <div class="col-12">
-          <h2 class="section-title">Draft visualizations <span class="draft-badge">DRAFT</span></h2>
-          <p class="draft-note">These are sketches for future interactive ideas. They are placeholders. They preview novel directions.</p>
-        </div>
-
-        <!-- Draft 1 -->
-        <div class="col-lg-4">
-          <div class="chart-card placeholder-card p-2 p-md-3 h-100">
-            <div class="chart-title">Sequence Sankey for event chains <span class="draft-badge">Draft</span></div>
-            <div class="chart-placeholder disabled" aria-label="Placeholder for Sequence Sankey visualization">Draft placeholder. Not implemented.</div>
-            <p class="section-copy mt-2 draft-note">A Sankey would show common event paths across time band, weather, action, and outcome. Filters would simplify flows. The aim is a readable chain of steps.</p>
-          </div>
-        </div>
-
-        <!-- Draft 2 -->
-        <div class="col-lg-4">
-          <div class="chart-card placeholder-card p-2 p-md-3 h-100">
-            <div class="chart-title">Calendar small multiples <span class="draft-badge">Draft</span></div>
-            <div class="chart-placeholder disabled" aria-label="Placeholder for Calendar small multiples visualization">Draft placeholder. Not implemented.</div>
-            <p class="section-copy mt-2 draft-note">Monthly calendars would show daily counts with compact marks. A brush would select spans. Scaling would be robust per month.</p>
-          </div>
-        </div>
-
-        <!-- Draft 3 -->
-        <div class="col-lg-4">
-          <div class="chart-card placeholder-card p-2 p-md-3 h-100">
-            <div class="chart-title">Risk terrain and corridors <span class="draft-badge">Draft</span></div>
-            <div class="chart-placeholder disabled" aria-label="Placeholder for Risk terrain and corridors visualization">Draft placeholder. Not implemented.</div>
-            <p class="section-copy mt-2 draft-note">Directional kernels would reveal risk ridges and likely corridors. A slider would tune direction. Pins would report ratios.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- Methods Section -->
   <section class="py-5 section-card alt reveal" data-reveal-delay="360">
@@ -143,7 +220,7 @@
         <div class="col-12">
           <h2 class="section-title">Methods</h2>
           <p class="section-copy">
-            We use a random 5% sample. We parse dates, times, and coordinates. We drop invalid or missing values.
+            We use the full dataset. We parse dates, times, and coordinates. We drop invalid or missing values.
           </p>
           <p class="section-copy">
             The heatmap aggregates monthly counts by hour. The color scale uses percentiles within the visible window. Horizontal zoom adjusts the time window. Vertical scroll cycles the hour order.

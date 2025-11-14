@@ -13,7 +13,7 @@ export function renderFactorChart(containerId, results) {
 
   if (!results || !results.length) {
     const p = document.createElement('p');
-    p.textContent = 'No significant factors found in sample.';
+    p.textContent = 'No significant factors found in dataset.';
     container.appendChild(p);
     return;
   }
