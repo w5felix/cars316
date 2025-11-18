@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>NYC Orbit Accident Map</title>
+    <style>
+        body {
+            margin: 0;
+            background: #0b0d17;
+            color: white;
+            font-family: sans-serif;
+            overflow: hidden;
+        }
+
+        #chart {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(20,20,20,0.9);
+            padding: 10px;
+            border-radius: 6px;
+            color: white;
+            pointer-events: none;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chart"></div>
+<div class="tooltip" id="tooltip" style="opacity:0;"></div>
+
+<!-- ES MODULE -->
+<script type="module" src="./orbit.js"></script>
+
+</body>
+</html>
