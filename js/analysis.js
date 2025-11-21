@@ -12,7 +12,7 @@ export function analyzeFactors(rows) {
     { name: 'Contributing factor (2)', key: 'factor2', get: r => val(r.factor2) },
     { name: 'Vehicle type', key: 'vehicleType', get: r => val(r.vehicleType) },
     { name: 'Pre-crash action', key: 'preCrash', get: r => val(r.preCrash) },
-    { name: 'Driver sex', key: 'driverSex', get: r => val(r.driverSex) },
+    { name: 'Driver sex', key: 'driverSex', get: r => normalizeDriverSex(val(r.driverSex)) },
     { name: 'Hour of day', key: 'hour', get: r => (Number.isFinite(r.hour) ? String(r.hour).padStart(2,'0')+':00' : null) }
   ];
 
@@ -93,6 +93,15 @@ function val(s) {
   const t = String(s).trim();
   if (!t || t === 'NA' || t === 'Unknown') return null;
   return t;
+}
+
+// Normalize driver sex values: "M" -> "Male", "F" -> "Female"
+function normalizeDriverSex(s) {
+  if (s == null) return null;
+  const t = String(s).trim().toUpperCase();
+  if (t === 'M') return 'Male';
+  if (t === 'F') return 'Female';
+  return s; // pass through other values
 }
 
 function safeChi(obs, exp) {

@@ -43,17 +43,26 @@ export function renderFactorChart(containerId, results) {
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Build labels like "Factor: Value"
-  const items = results.map(r => ({
-    label: `${r.factor}: ${r.value}`,
-    chi2: r.chi2,
-    rr: r.rr,
-    n: r.n,
-    injured: r.injured,
-    rate: r.rate,
-    otherRate: r.otherRate,
-    baseRate: r.baseRate
-  }));
+  // Build labels like "Factor: Value" then simplify to just the value part
+  let items = results.map(r => {
+    // Extract just the value part after the colon (e.g., "Parked" from "Pre-crash action: Parked")
+    const fullLabel = `${r.factor}: ${r.value}`;
+    const simplifiedLabel = r.value; // Keep only the second half after colon
+    return {
+      label: simplifiedLabel,
+      fullLabel: fullLabel,
+      chi2: r.chi2,
+      rr: r.rr,
+      n: r.n,
+      injured: r.injured,
+      rate: r.rate,
+      otherRate: r.otherRate,
+      baseRate: r.baseRate
+    };
+  });
+
+  // Keep only top 12 factors by chi-square
+  items = items.sort((a, b) => d3.descending(a.chi2, b.chi2)).slice(0, 12);
 
   // Scales
   const x = d3.scaleLinear()
