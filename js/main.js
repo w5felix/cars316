@@ -61,6 +61,7 @@ function renderTimeInsight(rows) {
   try {
     const el = document.getElementById('time-insight');
     if (!el || !rows || !rows.length) return;
+    el.style.color = '#ffffff'; // Set text color to white
 
     // Group by year and month
     const byMonth = new Map(); // key: YYYY-MM -> count
@@ -287,8 +288,12 @@ function renderVehicleChart(containerId, rows) {
   if (!data.length) { g.append('text').attr('x', innerW/2).attr('y', innerH/2).attr('text-anchor','middle').attr('fill','var(--muted)').text('No data'); return; }
   const N = data.length; const inj = d3.sum(data, r=>r.injured?1:0); const base = inj/Math.max(1,N);
   // Build groups and keep top 8 by n
-  const map = d3.rollups(data, v=>({ n:v.length, a:d3.sum(v,r=>r.injured?1:0) }), r=>cleanCat(r.vehicleType)||'Other');
-  const items = map.map(([label, c])=> ({ label, n:c.n, a:c.a, rate: ebShrink(c.a, c.n, base) }));
+  // Group by normalized vehicle label so variants aggregate (e.g., station wagon / sport utility -> 'SUV')
+  const map = d3.rollups(data, v=>({ n:v.length, a:d3.sum(v,r=>r.injured?1:0) }), r=>normalizeVehicleLabel(cleanCat(r.vehicleType))||'Other');
+  let items = map.map(([label, c])=> ({ label, n:c.n, a:c.a, rate: ebShrink(c.a, c.n, base) }));
+  // Exclude certain noisy/undesired vehicle type categories (compare lower-case normalized labels)
+  const vehExclude = new Set(['4 dr sedan', 'taxi', 'tractor truck diesel']);
+  items = items.filter(d => !vehExclude.has(String(d.label).toLowerCase()));
   items.sort((a,b)=> d3.descending(a.n,b.n));
   const top = items.slice(0, 8);
   top.sort((a,b)=> d3.descending(a.rate,b.rate));
@@ -331,7 +336,8 @@ function renderGenderChart(containerId, rows) {
   const N = data.length; const inj = d3.sum(data, r=>r.injured?1:0); const base = inj/Math.max(1,N);
   const map = d3.rollups(data, v=>({ n:v.length, a:d3.sum(v,r=>r.injured?1:0) }), r=>{
     const s = cleanCat(r.driverSex);
-    if (s===null) return 'Unknown';
+    // Treat missing/unspecified driver sex as part of the broader 'Other/Unknown'
+    if (s === null) return 'Other/Unknown';
     if (/^m/i.test(s)) return 'Male';
     if (/^f/i.test(s)) return 'Female';
     return 'Other/Unknown';
@@ -381,7 +387,10 @@ function initSmartEstimator() {
 
     // Populate options from data (sorted by frequency)
     populateSelect(actionSel, distinctByFreq(analysisData.map(r => cleanCat(r.preCrash))));
-    populateSelect(vehSel, distinctByFreq(analysisData.map(r => cleanCat(r.vehicleType))));
+    // Exclude a few noisy vehicle-type categories from the dropdown and normalize labels
+    const vehExclude = new Set(['4 dr sedan', 'taxi', 'tractor truck diesel']);
+    const vehList = distinctByFreq(analysisData.map(r => normalizeVehicleLabel(cleanCat(r.vehicleType)))).filter(v => v && !vehExclude.has(v.toLowerCase()));
+    populateSelect(vehSel, vehList);
     populateSelect(genSel, distinctByFreq(analysisData.map(r => cleanCat(r.driverSex))));
     if (borSel) populateSelect(borSel, distinctByFreq(analysisData.map(r => cleanCat(r.borough))));
     if (fac1Sel) populateSelect(fac1Sel, distinctByFreq(analysisData.map(r => cleanCat(r.factor1))));
@@ -418,6 +427,17 @@ function cleanCat(s) {
   if (s == null) return null;
   const t = String(s).trim();
   if (!t || t === 'Unspecified' || t === 'NA' || t === 'Unknown') return null;
+  return t;
+}
+
+// Normalize vehicle-type labels for display and grouping
+function normalizeVehicleLabel(s) {
+  if (s == null) return null;
+  const t = String(s).trim();
+  if (!t) return null;
+  const l = t.toLowerCase();
+  // Map station wagon / sport utility variants to a concise 'SUV' label
+  if (l.includes('station wagon') || l.includes('sport utility') || l.includes('sport-utility') || l.includes('sport') && l.includes('utility') || l.includes('suv')) return 'SUV';
   return t;
 }
 
@@ -594,7 +614,7 @@ function renderSmartChart(containerId, est) {
     .attr('y', d => y(d.label) + y.bandwidth()/2)
     .attr('dy', '0.32em')
     .attr('text-anchor','end')
-    .attr('fill', 'var(--text, #0f172a)')
+    .attr('fill', '#ffffff')
     .text(d => d.label);
 
   // Values on bars
@@ -603,7 +623,7 @@ function renderSmartChart(containerId, est) {
     .attr('x', d => x(d.value) + 6)
     .attr('y', d => y(d.label) + y.bandwidth()/2)
     .attr('dy', '0.32em')
-    .attr('fill', 'var(--muted)')
+    .attr('fill', '#ffffff')
     .text(d => fmtPct(d.value));
 
   // RR annotation
